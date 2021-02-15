@@ -1,0 +1,266 @@
+\section{Linear Discriminant Methods}
+\textbf{Discriminant methods} aim at estimating $P(X|Y)$ and $P(Y)$ and then use the bayes rule to estimate $P(Y|X)$, instead of directly estimating the latter.
+\begin{itemize}
+	\item Tend to model a decision boundary between classes / labels. Goal is to find the boundary separating one class from abother
+\end{itemize}
+
+
+
+\subsection{Discriminative / Generative Models}
+Discriminative models model the decision boundary between the classes, while generative model explicitly model the distribution of each class. Reference: \href{https://medium.com/@mlengineer/generative-and-discriminative-models-af5637a66a3}{Medium Blogpost}. 
+\subsubsection{Models}
+\textbf{Generative model: }statistical model of the joint probability distribution $p(x, y)$ 	\textbf{Important: } Lecture's notation: $p(x, y\mid \theta)$ ,where $\theta$ is the assumed model. \\
+	Examples: Hidden Markov Models,  Naive Bayes, Bayesian Networks, LDA/QDA
+	
+\vspace{1em}
+ \textbf{Discriminative model: } Model of the conditional distribution $p(y|x)$ 
+		Examples: Threshold functions (perceptron), Fisher's linear discriminant, SVMs, Traditional Neural Networks
+
+\subsubsection{Classifiers}
+\textbf{Probabilistic Generative Classifier}\\
+\textit{Based on the generative model. Called generative because the joint probability distribution P(X, Y) can be used to generate samples.}
+\begin{enumerate}
+	\item Assume distribution of labels $(Y|\theta)$
+	\item Assume distribution of samples conditioned on labels: $P(X|Y=y)$
+	\item Perform MLE over likelihood 
+	\begin{equation*}
+		P(\X, \y|\theta) = P(\y)P(\X|\y, \theta)
+	\end{equation*}
+	\item Compute posterior $P(Y|X)$ with LDA or QDA
+	\item Create classifier from $P(y|X)$ using Bayes decision theory
+	\begin{equation*}
+		y = \argmax_y P(y|X) = \argmax_y P(y)\prod_{i=1}^n p(x_i|y)
+	\end{equation*}
+\end{enumerate}
+
+\vspace{1em}
+\textbf{Probabilistic Discriminative Classifier} \\
+\textit{Based on the discriminative models. Called discriminative because classifier can be used to discriminate the value of the target variable $Y$.}
+\begin{enumerate}
+	\item Assume the posterior has the form $P(Y|X) = \sigma(\transp w x + w_0)$. After normalization $P(Y|X) = \sigma(\transp{\tilde w}x)$
+	\item Use MLE over  likelihood 
+	\begin{equation*}
+		P(\y|\w, \X) = P(\y|\X, \w)
+	\end{equation*}
+	to get
+	\begin{multline*}
+		L(w) = \log P(\y|\w, \X)\\
+		 = c + \sumin\left[y_i\log\sigma(\transp{\w}) x_i+ (1-y_i)\log(1-\sigma(\transp{\w}x_i) \right]
+	\end{multline*}
+	\item Do gradient Descent or Newton's method over $\mathit{NL}(w) = -L(w)$, since $L(w)$ is intractable.
+	\item Use weight vector $w^*$ to predict.
+\end{enumerate}
+
+\vspace{1em}
+\textbf{Discriminative Classifier}
+\textit{The discriminative classifier is not based on any model, but classifies directly.}
+\begin{enumerate}
+	\item  Choose a loss function $\L : \mathcal Y \times \mathcal Y \to \R^+$
+	\item Approximate expected risk $\E_{X,Y}[\L(y, c(X))]$ with the empirical loss $\hat R = \frac{1}{n}\sumin \L(y_i, c(x_i))$ \textit{(abuse of notation)}
+	\item Find the optimal classifier $c^*$, such that $c^* = \argmin_c \hat R$
+\end{enumerate}
+
+
+% =================================== Marginal Distributions ====================================
+\subsection{Marginal Distributions Recap}
+From $P(X,Y)$, we can compute
+\begin{align*}
+	P(X) &= \sum_y P(X, Y=y) \\
+	P(Y) &= \int_x P(Y, X=x) \\
+	P(X|Y) &= P(X,Y)/P(Y) \\
+	P(Y|X) &= P(X,Y)/P(X)
+\end{align*}
+
+
+
+% =================================== Discriminant Functions ====================================
+\subsection{Discriminant Functions}
+Function that takes an input vector $x$ and assigns it to one of the $k$ classes $\mathcal C_k$
+
+\subsubsection{Least Squares (LDA, QDA)}
+Make the model predictions as close as possible to a set of target values.
+\begin{itemize}
+	\item \textbf{Linear Discriminant Analysis (LDA):} Assume the classes have the same covariances (i.e. $\Sigma_0 = \Sigma_1$)\\ $p(y\mid x) = \sigma(\mathbf w^Tx + w_0)$
+	\item \textbf{Quadratic discriminant Analysis (QDA):} General (no cov. assumption) \\
+	$p(y\mid x) = \sigma(x^T\mathbf Wx + x^T\mathbf w + w_0)$ 
+
+\end{itemize}
+
+
+
+\subsubsection{Fisher's Linear Discriminant}
+Classification as dimensionality reduction. Goal is to maximize class separation in the output space.
+
+\begin{itemize}
+	\item choose $\mathbf w$ to maximize $m_2 - m_1 = \mathbf w^T(\mathbf m_2 - \mathbf m_1)$ with $m_k = \mathbf w^T\mathbf w_k$ ($\mathbf m_i$ is the mean of class $i$).
+	
+	$$
+		w^* \propto S_w^{-1}(\mean{x}_0 - \mean{x}_1)
+	$$
+	\item Within-class variance: $s_k^2 = \sum_{n\in \mathcal C_k}\mathbf (w^T(x_n - \mean{x}_k))^2$
+	\item \textbf{Fisher criterion: } between class variance vs within-class variance: 
+	$$
+		J(\mathbf w) = \frac{\mathbf w^T(\mean{x}_1 - \mean{x_2})(\mean{x}_1 - \mean{x_2})^T\mathbf w}{s_1^2 + s_2^2} = \frac{\mathbf w^T\mathbf S_B \mathbf w}{\mathbf w^T\mathbf S_W \mathbf w }
+	$$,
+	where $\mathbf S_B$ is the between-class variance and $\mathbf S_W$ is the within class variance.
+	\begin{align*}
+		\mathbf S_B &= (\mathbf m_2 - \mathbf m_1)(\mathbf m_2 - \mathbf m_1)^T \\
+		\mathbf S_W &= \sum_{n\in\mathcal C_1} (x_n - \mathbf m_1)(x_n - \mathbf m_1)^T \\
+					& \quad\quad+   \sum_{n\in\mathcal C_2} (x_n - \mathbf m_2)(x_n - \mathbf m_2)^T \\
+					&= \textit{Cov}(\mathcal C_1) + \textit{Cov}(\mathcal C_2)
+	\end{align*}
+\end{itemize}
+
+For multiple classes, Fisher works as well. See \textit{Pattern Recognition and Machine Learning, p.192}.
+
+\textbf{Classification with fisher: } $\mathbf w^Tx = \sum_iw[i]x[i]$
+\begin{enumerate}
+	\item Fisher's projection $w^*$
+	\item Fit mix of gaussians
+	\item Bayes decision theory
+\end{enumerate}
+
+
+% =================================== Perceptron Algorithm ====================================
+\subsection{Perceptron Algorithm}
+\begin{itemize}[leftmargin=*]
+	\item \textbf{ Goal:} Compute $w\in\R^d: \begin{cases}
+		w^Tx_i > 0 & \textit{if } y_i = +1 \\
+		w^Tx_i < 0 & \textit{if } y_i = -1
+	\end{cases}$
+	
+	Threshold function: $c(x)= \textit{sgn}(w^Tx)$
+	\item \textbf{Cost Function: }
+	\begin{align*}
+		\mathcal L(y, c(x)) &= \begin{cases}
+			0 & \textit{if } c(x) = y \begin{cases}
+											w^Tx > 0 \land y = +1 \\ 
+											\textit{or }\\
+											w^Tx < 0 \land y = -1 
+										\end{cases} \\
+			|w^Tx| & \textit{if } c(x) \neq y
+		\end{cases} \\
+		 &= \begin{cases}
+			0 & \textit{if } yw^Tx > 0 \\
+			|w^Tx| & \textit{if } yw^Tx < 0
+		\end{cases} \\
+		&= \sum_{i\in \mathcal M}-y_iw^Tx_i
+	\end{align*}
+\end{itemize}
+
+\begin{algorithm}[H]  
+	$k\gets 0$ \\
+	$w^{(k)} \gets \$ $\\
+   \DoUntil{$\norm{\eta(k)\sum_i y_i x_i} < \epsilon$}
+   {
+   		\If{$y_kw^{{(k)}^T} x_k < 0$}{
+      		$w^{(k+1)} \gets w^{(k)} + \eta(k)\y_kx_k$\\
+      	}
+      $k\gets k+1$ 
+  	}
+  \caption{Variable increment perceptron}
+\end{algorithm}
+\textbf{Variable increment perceptron converges} if
+\begin{itemize}
+	\item Train set is linearly separable
+	\item $\eta(k) \geq 0$
+	\item $\sum_{k=0}^t\eta(k) \to \infty$ for $t\to\infty$
+	\item $\frac{\sum_{k\leq t}\eta^2(k)}{\left(\sum_{k\leq t}\eta(k)\right)^2}\to 0$ for $t\to\infty$
+\end{itemize}
+
+
+
+
+\subsection{Loss-Functions}
+\textbf{0-1 Loss: } Piecewise continuous, not differentiable
+$$
+\mathcal L^{0-1}\left(y, c(x)\right) = 
+	\begin{cases}
+		0 & \textit{if } c(x) = y\\
+		1 & \textit{if } c(x) \neq y
+	\end{cases}
+$$
+
+\textbf{exponential Loss: } Used in AdaBoost
+$$
+\mathcal L^{\exp}\left(y, c(x)\right) = 
+\exp(-yc(x))
+	\begin{cases}
+		e^{-1} &\textit{if } c(x) = y \\
+		e &\textit{if } c(x) \neq y
+	\end{cases}
+$$
+
+\textbf{Hinge Loss: } Used in SVMs
+$$
+\mathcal L^{\text{hinge}}\left(y, c(x)\right) = 
+	\begin{cases}
+		0 & \textit{if } y w^Tx\geq 1 \\
+		-y w^Tx & \textit{otherwise } 
+	\end{cases}
+$$
+
+\textbf{Perceptron Loss: }
+$$
+\mathcal L^{\text{perc}}\left(y, c(x)\right) = 
+	\begin{cases}
+		0 & \textit{if } yw^Tx\geq 0 \\
+		-yw^Tx & \textit{otherwise } 
+	\end{cases}
+$$
+
+\subsubsection{Gradient Descent}
+If the loss function is analytically tractable and differentiable, we can use gradient descent to find $\max_w \log p(data\mid w) = \max_w L(w)$
+
+We define 
+$$
+	\textit{NL}(w) := -L(w) \quad\quad \textit{The loss function criterium}
+$$
+
+\begin{algorithm}[H]  
+	$k\gets 0$ \\
+	$w^{(k)} \gets \empty $\\
+   \DoUntil{$\norm{\eta(k)\nabla NL(w^{(k)}} < \epsilon$}
+   {
+      $w^{(k+1)} \gets w^{(k)} - \eta(k)\nabla \textit{NL}(w^{(k)})$
+      
+      $k\gets k+1$ 
+  	}
+  \caption{Gradient Descent}
+\end{algorithm}
+
+\textbf{How to choose learning rate?}
+\begin{itemize}
+	\item $\eta(k) = \arg\min_\eta \textit{NL}(w^{(k+1)}$
+	\item Approximate NL at $w^{(k)}$ with an analytically tractable approximation
+	\begin{multline*}
+		\textit{NL}(w^{(k+1)}) \approx \textit{NL}(w^{(k)}) + (w^{(k+1)} - w^{(k)})^T\nabla\textit{NL}(w^{(k)})  \\		
+			+	\frac{1}{2} (w^{(k+1)} - w^{(k)})^T\mathbf H_{\textit{NL}}(w^{(k)})(w^{(k+1)} - w^{(k)})
+	\end{multline*}
+	to get 
+	$$
+		\eta(k) = \frac{\norm{\textit{NL}(w^{(k)})}^2}{\nabla \textit{NL}^T(w^{(k)}) \mathbf H_{\textit{NL}}\nabla\textit{NL}(w^{(k)})}
+	$$
+	
+\end{itemize}
+
+\subsubsection{Newton's Method}
+Alternative approach to gradient descent:\\ Choose $w^{(k+1)} =\arg\min \textit{NL}(w)$ s.t. $w\in\textit{neighborhood of } w^{(k)}$
+
+\begin{algorithm}[H]  
+	$k\gets 0$ \\
+	$w^{(k)} \gets \$ $\\
+   \DoUntil{$\norm{\eta(k)\nabla NL(w^{(k)}} < \epsilon$}{
+      $w^{(k+1)} \gets w^{(k)} - \mathbf H^{-1}_{\textit{NL}}(w^{(k)})\nabla \textit{NL}(w^{(k)})$\\
+      $k\gets k+1$ 
+  		}
+  \caption{Newton's Method}
+\end{algorithm}
+
+\textbf{Comparison: }
+\begin{itemize}
+	\item Gradient Descent: Depends on $\eta$, but is computationally easier
+	\item Newton's Method: Requires $\mathbf H^{-1}_{\textit{NL}}$ but gets better updates and does not require a learning rate.
+\end{itemize}
+
+

@@ -1,0 +1,91 @@
+\section{Density Estimation with Parametric Models}
+\subsection*{Overview: }
+\begin{itemize}
+	\item Maximum Likelihood estimation \\
+	$$\theta_{MLE} = \arg\max p(X\mid\theta) = \arg \max \sum_i p(x_i\mid\theta)$$
+	\item Maximum a Posteriori estimation \\
+	\begin{multline*}	
+	\theta_{MAP} = \arg\max P(\theta\mid X) = \arg\max P(X\mid\theta)p(\theta) \\
+	= \arg \max \sum_i(\log{p(x_i\mid \theta)} + \log p(\theta))
+	\end{multline*}
+	\item If we have uniform distribution in the prior, the last term of the MAP sum goes away and we have $\theta_{MAP} = \theta_{MLE}$.
+\end{itemize}
+
+\subsection{Bayesianism: MAP estimation}
+Assume $p(x)$ is unknown, $p(x\mid \theta)$ is known. We want to copmute $p(X=x \mid \mathcal X)$
+\begin{itemize}
+	\item Prior P(model)
+	\item likelihood P(data $\mid$ model)
+	\item Posterior: P(model $\mid$ data)
+	\item evidence: P(data)
+	\item Bayes Rule: 
+	$$P(model \mid data) = \frac{P(data\mid model)P(model)}{P(data)}$$
+\end{itemize}
+
+\subsection{Frequentism (Fisher): ML estimation}
+\begin{enumerate}
+	\item Define parametric model (e.g. $\mathcal N(\theta, 1)$)
+	\item Define the likelihood as a function of the parametric model (probability of the observations given the parameter $\theta$), e.g.
+	$$
+		\mathbf P(y_1, ..., y_n \mid \theta) = \prod_{i\leq n}\mathbf P(y_i\mid \theta) = \prod_{i\leq n}\mathcal N(y_i, \theta, 1)
+	$$
+	\item compute an estimator by maximizing the likehood $\hat\theta_{ML} = \arg\max_\theta \mathbf P(y_1, ..., y_n \mid \theta)$, usually using the log-likelihood.
+\end{enumerate}
+
+\textbf{Properties of ML Estimators:}
+\begin{itemize}
+	\item Consistent ($\theta_{ML} \to \theta_0$) as $n\to \infty$
+	\item Asymptotically normal: $1/\sqrt n (\theta_{ML} - \theta_0)$ converges in distribution to a random variable with distribution $\mathcal N(0, J^{-1}(\theta)I(\theta)J^{-1}(\theta)$
+	\item Asymptotically efficient: $\theta_{ML}$ minimizes $\mathbb E\left[(\theta_{ML} - \theta_0)^2\right]$. I.e. $\mathbb E\left[(\theta_{ML} - \theta_0)^2\right] = \frac{1}{I_n(\theta_0)}$ (See Rao-Cramer Bound)
+\end{itemize}
+
+\subsubsection{Rao Cramer Bound}
+There exists no estimator such that $\mathbb E\left[(\hat\theta^* - \theta_0)^2\right] = 0$, 
+	$$
+		\mathbb E\left[(\hat\theta - \theta_0)^2\right] \geq \frac{1}{I_n(\theta_0)} \text{ for any unbiased estimator $\hat\theta$ of $\theta_0$}.
+	$$
+	where $I_n(\theta_0)$ is the Fisher Information: $$I_n(\theta_0) = n\mathbb V_{\theta_0}\left[\left[
+								\frac{\partial}{\partial\theta} \log \mathbf P(Y \mid \theta)
+						\right]_{\theta_0}\right]$$
+
+\subsubsection{Stein estimator}
+For finite samples, the ML estimator is not necessarily efficient.
+$$
+	\hat\theta_{JS} = \left(1 - \frac{(d-2)\sigma^2}{\norm{y}^2}\right) \mathbf y
+$$
+
+is better for a multivariate random variable with distribution $\mathcal N(\theta_0, \sigma^2 I)$ with range $\mathbb R^d, d\geq 3$.
+
+\subsection{Conclusion}
+\begin{center}
+	\begin{tabular}{ p{0.47\columnwidth} | p{0.45\columnwidth} } 
+		\textbf{Bayesian Method} & \textbf{Frequentist method}\\\hline
+		Allows priors & Does not allow priods \\\hline
+		Provides distribution when estimating parameters & Provides a single-point when estimating parameters \\\hline
+		Requires efficient integration methods (when computing posteriors) & Only requires differentiation methods when estimating parameters \\\hline
+		The prior often induces a regularization term &  consistent, equivariant, asympt. normal + efficient \\
+	\end{tabular}
+\end{center}
+
+\subsection{Summary ML Estimators}
+\begin{itemize}
+	\item Bias of an estimator: $\mathbf{bias}(\hat\theta_n) = \E[\hat\theta_n] - \theta$: deviation from the true parameter
+	\item consistent estimator: $\forall\epsilon > 0, \mathbb P\{|\hat\theta_n - \theta| > \epsilon\} \xrightarrow{n\to \infty} 0$
+	\item Efficiency: ML estimators are \textbf{asymptotically efficient}: 
+	$$
+		\lim_{n\to\infty}\left(\mathbb V[\hat\theta^{ML}(x_1, ..., x_n)]I(\theta)\right)^{-1} = 1
+	$$
+	$$ I(\theta) = \mathbb V\left[\frac{\partial\log P(x_1, ..., x_n|\theta)}{\partial \theta} \right]$$
+	\item 
+\end{itemize}
+
+\subsection{ML vs. Bayes Estimation (MAP)}
+\begin{itemize}
+	\item They are asymptotically equivalent
+	\item Advantage of ML: Only need differential calculus and gradient descent techniques. Bayes needs integration.
+	\item A "flat" prior yields little information, since the model uncertainty is not significantly reduced.
+\end{itemize}
+
+
+
+

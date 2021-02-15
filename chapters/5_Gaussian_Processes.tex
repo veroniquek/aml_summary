@@ -1,0 +1,176 @@
+\section{Gaussian Processes}
+Different way to go nonlinear.
+
+Remember linear regression: $Y = X^T\beta + \epsilon, \epsilon\sim \mathcal N(\epsilon, 0, \sigma^2)$
+or equivalently:
+$$
+	p(Y\mid X,\beta,\sigma) = \mathcal N(Y\mid X^T\beta, \sigma^2) \propto \exp\left(-\frac{1}{2\sigma^2}(Y - X^T\beta)^2\right)
+$$
+
+\subsection{Multivariate Gaussians}
+A vector $x\in\R^d$ has multivariate normal distribution with mean $\mu\in\R^d$ and covariance $\Sigma\in \mathbf S^d$ (symmetric positive definite $n\times d$ matrix) $x\sim \mathcal N(\mu, \Sigma)$, if
+
+$$
+	p(x;\mu,\Sigma) = \frac{1}{(2\pi)^{d/2}|\Sigma|^{1/2}}\exp\left(-\frac
+	1 2 (x-\mu)^T\Sigma^{-1}(x-\mu)\right)
+$$
+
+\subsubsection{Why Gaussians are useful}
+\begin{itemize}
+	\item Common when modeling noise in statistical algorithms (can be considered as accumulation of small independent random perturbations);\\ 
+		Summation of independent random variables tend to look gaussian.
+	\item Convenient for many analytical manipulations, because many of the integrals that arise have closed form solutions.
+\end{itemize}
+
+
+\subsection{Bayesian Linear Regression} 
+\textit{Assume a prior distribution over parameters and obtain posterior using Bayes's rule.}
+
+\vspace{1em}
+We can turn conventional multiple linear regression model into a bayesian regression model by defining a \textbf{prior} over the regression coefficients.
+
+\textbf{Goal: } Probabilistic approach; find a distribution over the parameters that gets updated whenever new data points are observed.
+
+$$
+	p(\beta\mid\Lambda) = \mathcal N_d(\beta\mid\mathbf 0, \Lambda^{-1})\propto \exp(-1/2 \beta^T\Lambda\beta),
+$$
+where $\Lambda = \inv \Sigma$ is the precision matrix.
+
+This favors $\beta$ to be $0$. 
+
+The \textbf{Posterior} then becomes:
+\begin{align*}
+	p(\beta\mid \X, \y, \Lambda) &= \mathcal{N} (\beta\mid\mu_\beta, \Sigma_{\beta})\\
+							\mu_\beta	&= (\X^T \X + \sigma^2\Lambda)^{-1}\X^T \y \\
+							\Sigma_\beta &= \sigma^2(\X^T \X + \sigma^2\Lambda)^{-1}
+\end{align*}
+
+Bayesian linear regression with gaussian prior over the coefficients is equivalent to ridge regression for $\Lambda =\lambda \mathbb I_d, \sigma=1$
+
+\subsection{Gaussian Processes}
+
+\textit{Gaussian processes are the extension of multivariate Gaussians to infinite-sized collections of real-values variables (Gaussian processes are distributions over random functions and not just random vectors).}
+
+\vspace{1em}
+\textbf{Goal: } Non-parametric approach: Find a distribution over the possible functions $f(x)$ that are consistent with the observed data (is also a Bayesian approach: Start with a prior, update it whenever new data points are observed; produce posterior).
+\begin{itemize}
+	\item Moments of joint Gaussian:\\
+	 $\E[\y] = \mathbf 0, Cov[\y] = \X\Lambda^{-1}\X^T + \sigma^2\mathbb{I}_n$
+	\item Consider the joint distribution over all $\y$:
+
+	$$
+		\begin{bmatrix}
+			y_1 \\ \vdots \\ y_n
+		\end{bmatrix}
+			\sim \mathcal N \left(
+		\y
+		\middle\vert
+		\mathbf 0,
+			\begin{bmatrix}
+				k_{1,1} + \sigma^2 & k_{1,2} & \hdots & k_{1.n} \\
+				k_{2,1} & k_{2,2} + \sigma^2 & \hdots & k_{2,n} \\
+				\vdots & \vdots & \ddots  & \vdots \\
+				k_{n,1} & k_{n,2} & \hdots & k_{n,n} + \sigma^2
+			\end{bmatrix}
+		\right)
+	$$
+	where $k_{i,j} = k(x_i, x_j) ) x_i^T\Lambda^{-1} x_j$ is a Kernel function (here, any kernel function could be used, which gives it power and flexibility).
+	\item This means, that outputs of points whose inputs are similar to each other, have a high covariance (non-axis-sligned ellipse level set of joint distributions)
+\end{itemize}
+
+\subsubsection{Kernel Functions}
+Kernel functions specify the degree of similarity between any 2 datapoints. They encode our assumptions about the function we wish to learn (different kernels can obtain very different models).
+
+\textbf{Properties: }
+\begin{enumerate}
+	\item Symmetry: $k(x,x') = k(x', x)$
+	\item Positive Semi-Definiteness: \\
+		$k(x,x')f(x)f(x') dxdx' \geq 0 \forall f\in L-2, \Omega\subset \R^d$
+\end{enumerate}
+
+The \textbf{Gram Matrix} $\mathbf K$ is positive semi-definite $/iff x^T\mathbf K x\geq 0$
+
+
+\textbf{Examples of kernel functions: }
+\begin{itemize}
+	\item Linear kernel: $k(x,x') = x^Tx'$
+	\item Polynomial Kernel $k(x,x') = (x^Tx' + 1)^p$
+	\item Gaussian (RBF) kernel: $k(x,x') = \exp(-\norm{x-x'}_2^2(h^2)$ (judges how different $x$ and $x'$ are.
+	\item Sigmoid (tanh) kernel: $k(x,x') = \tanh \kappa x^Tx' - b$
+\end{itemize}
+
+Different kernels have different invariance properties (e.g. invariance to rotation or translation)
+
+\subsubsection{Prediction by Gaussian Processes}
+The predictive density $p(y_{n+1} \mid x_{n+1}, \X, \y)$ can be obtained analytically. 
+
+\begin{align*}
+		p\left(
+		\begin{bmatrix}
+			\y \\ y_{n+1}	 
+		\end{bmatrix}
+		\middle\vert
+		x_{n+1}, \X, \sigma
+	\right)
+	&= \mathcal N
+	\left(
+		\begin{bmatrix}
+			\y \\ 
+			y_{n+1}	 
+		\end{bmatrix}	
+		\middle\vert
+		\mathbf 0,
+		\begin{bmatrix}
+			\mathbf C_n & \mathbf k \\
+			\mathbf k^T & c
+		\end{bmatrix}
+	\right) \\
+	\mathbf C_n &= \mathbf K + \sigma^2\mathbf I \\
+	c &= k(x_{n + 1}, x_{n+1}) + \sigma^2 \\
+	\mathbf k &= k(x_{n+1}, \X) \\
+	\mathbf K &= k(\X, \X)
+\end{align*}
+
+\begin{algorithm}[H]
+	\SetKwInOut{Require}{Require}
+	\Require{	\\
+				$n$ observed data $\X = (x_1, ..., x_n)^\top \in \R^{n\times d}$, \\
+				$k$ kernel function \\
+				$\sigma^2$ noise variance
+				$x_{n+1}\in\R^d$ new data point 				
+				}
+				\vspace{1em}
+	$\mathbf K \gets (k(x_i, x_j))_{1\leq i,j \leq n}$	{\scriptsize \tcp*[r]{Compute kernel matrix}} 
+	$\mathbf k \gets (k(x_{n+1}, x_i))_{1\leq i\leq n}$ {\scriptsize \tcp*[r]{Similarity of new and observed data}}
+	$\mu_{y_{n+1}} \geq \transp{\mathbf k}(\mathbf K + \sigma^2\mathbf I)^{-1}\y$ {\scriptsize \tcp*[r]{Mean of predictive distribution}}
+	$\sigma^2_{y_{n+1}} \geq k(x_{n+1}, x_{n + 1}) - \transp{\mathbf k}(\mathbf K + \sigma^2\mathbf I)^{-1}\mathbf k$  {\scriptsize \tcp*[r]{Var of  \\ predictive distribution}}
+	\vspace{1em}
+	\Return{$\mathcal N(y_{n +1}|\mu_{y_{n+1}}, \sigma^2_{n+1})$} {\scriptsize \tcp*[r]{Return predictive distribution}}
+	\caption{Prediction with Gaussian processes}	
+\end{algorithm}
+
+
+\subsubsection{Reasons to use Gaussian processes for Regression}
+\begin{enumerate}
+	\item Like Bayesian methods, GP models allow to quantify uncertainty from errors in the parameter estimation procedure (not just instrinsic noise).
+	\item Non-parametric and can hence model essentially arbitrary functions of the input points
+	\item Natural ways to introduce kernels into a regressino modeling framework
+	\item Simple and straightforward linear algebra implementations
+\end{enumerate}
+
+\subsubsection{Wisdom of Crowds}
+Averaging over multiple estimators:
+\begin{itemize}
+	\item unbiased estimators remain unbiased after averaging
+	\item Variance is reduced
+\end{itemize}
+
+
+	
+	
+	
+	
+	
+	
+	
+	
